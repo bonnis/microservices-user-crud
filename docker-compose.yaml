@@ -1,0 +1,46 @@
+version: '3.4'
+
+services:
+  userservice:
+    image: userservice
+    build: ./user_service
+    environment:
+      NODE_ENV: production
+      DATABASE_URL : mongodb://mongodb_user/user
+  
+  mongodb_user:
+    image: mongo:latest
+    volumes: 
+      - data_user:/data/db
+
+  authservice:
+    image: authservice
+    build: ./auth_service
+    environment:
+      NODE_ENV: production
+      DATABASE_URL : mongodb://mongodb_auth/auth
+      USER_SERVICE_URL : http://userservice:3000
+      API_SECRET : "api_secret_c0b4"
+  
+  mongodb_auth:
+    image: mongo:latest
+    volumes: 
+      - data_auth:/data/db
+  
+
+  apigateway:
+    image: apigateway
+    build: ./api_gateway
+    environment:
+      NODE_ENV: production
+      USER_SERVICE_URL : http://userservice:3000
+      AUTH_SERVICE_URL : http://authservice:3000
+    ports:
+      - 3000:3000
+    depends_on: 
+      - userservice
+      - authservice
+  
+volumes:
+    data_user:
+    data_auth:

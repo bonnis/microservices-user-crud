@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.22.0 (955b78124)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: apigateway
+  name: apigateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: apigateway
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.22.0 (955b78124)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: apigateway
+    spec:
+      containers:
+        - env:
+            - name: AUTH_SERVICE_URL
+              value: http://authservice:3000
+            - name: NODE_ENV
+              value: production
+            - name: USER_SERVICE_URL
+              value: http://userservice:3000
+          image: bonnis/microservice-api-gateway:latest
+          name: apigateway
+          resources: {}
+      restartPolicy: Always
+status: {}

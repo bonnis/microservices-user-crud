@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert
+    kompose.version: 1.22.0 (955b78124)
+  creationTimestamp: null
+  labels:
+    io.kompose.service: userservice
+  name: userservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: userservice
+  strategy: {}
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert
+        kompose.version: 1.22.0 (955b78124)
+      creationTimestamp: null
+      labels:
+        io.kompose.service: userservice
+    spec:
+      containers:
+        - env:
+            - name: DATABASE_URL
+              value: mongodb://mongodb-user/user
+            - name: NODE_ENV
+              value: production
+          image: bonnis/microservice-user-service:latest
+          name: userservice
+          resources: {}
+      restartPolicy: Always
+status: {}

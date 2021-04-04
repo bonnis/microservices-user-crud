@@ -1,0 +1,556 @@
+openapi: 3.0.0
+
+info:
+  title: User CRUD Microservices
+  description: A simple user CRUD with microservices architecture
+  version: 0.0.1
+  contact:
+    name: Muhammad Rafi Fadhilah
+    email: rafti.f@gmail.com
+
+servers:
+  - url: 192.168.39.23:31990 
+    description: The local address used to develop the app
+
+tags:
+  - name: Auth
+    description: Authentication endpoints
+  - name: User
+    description: User CRUD endpoints
+
+components:
+  securitySchemes:
+    bearerAuth:            
+      type: http
+      scheme: bearer
+      bearerFormat: JWT    
+  responses:
+    UnauthorizedError:
+      description: Access token is missing or invalid
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                example: Authentication Failed
+
+
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Auth
+      summary: Login using credentials
+      description: Perform an authentication process using username and password in exchange for a refresh token and access token
+      consumes:
+        - application/json
+        - multipart/form-data
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: the user's username
+                  example: admin1
+                password:
+                  type: string
+                  description: the user's password
+                  example: secret
+
+      
+      responses:
+        200:
+          description: Successful Login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    description: Information
+                    example: Login Berhasil
+                  access_token: 
+                    type: string
+                    description: JWT token used to authenticate
+                  refresh_token: 
+                    type: string
+                    description: JWT token used to request a new access_token
+        400:
+          description: Failed Login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Information
+                    example: Gagal melakukan login, cek kredensial anda
+
+  /auth/logout:
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - Auth
+      summary: Logout
+      description: Invalidate the access token currently used 
+      consumes:
+        - application/json
+        - multipart/form-data
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      
+      responses:
+        200:
+          description: Successful Logout
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    description: Information
+                    example: Logout Berhasil
+        400:
+          description: Failed Logout
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Information
+                    example: Gagal melakukan logout
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Fetch new access token using refresh token 
+      description: Exchange refresh token for a new pair of access token and refresh token, invalidates the old access_token and refresh token
+      consumes:
+        - application/json
+        - multipart/form-data
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh_token:
+                  type: string
+                  description: JWT Token issued at login
+                  example: REFRESH_TOKEN
+
+      responses:
+        200:
+          description: Successful Refresh
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    description: Information
+                    example: Refresh token berhasil
+                  access_token: 
+                    type: string
+                    description: JWT token used to authenticate
+                  refresh_token: 
+                    type: string
+                    description: JWT token used to request a new access_token
+        400:
+          description: Failed Refresh
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Information
+                    example: Gagal melakukan refresh token 
+
+  /user:
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - User
+      summary: Get all users according to parameters(strict)
+      description: List all users according to parameters given, must be strictly equal 
+      consumes:
+        - application/json
+        - multipart/form-data
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: username
+          description: The user's username
+          required: true
+          schema:
+            type: string
+            example: admin1
+
+        - in: query
+          name: name
+          description: The user's name
+          required: true
+          schema:
+            type: string
+            example: Admin 1
+      
+      responses:
+        200:
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    description: Information
+                    example: Daftar user
+                  users: 
+                    type: array
+                    description: List of users
+                    items:
+                      $ref: "#/definitions/User"
+        400:
+          description: Failed operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Information
+                    example: Terjadi masalah ketika mengambil data
+    post:
+      security:
+        - bearerAuth: []
+      tags:
+        - User
+      summary: Create new user
+      description: Create new user with parameters provided, only admin can make new users
+      consumes:
+        - application/json
+        - multipart/form-data
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: The user's Username, used to log in
+                  example: admin1
+                password:
+                  type: string
+                  description: The user's would be password
+                  example: secret
+                name:
+                  type: string
+                  description: The user's name
+                  example: Admin Satu
+                role:
+                  type: string
+                  description: User's role that dictate their rights in the API
+                  enum:
+                    - admin
+                    - user
+      
+      responses:
+        200:
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    description: Information
+                    example: Berhasil membuat user
+                  user: 
+                    $ref: "#/definitions/User"
+        400:
+          description: Failed operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Information
+                    example: Tidak bisa membuat user, lengkapi parameter atau ganti username
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+  
+  /user/{id}:
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - User
+      summary: Get user with id
+      description: Get user with the id provided, though only admin can see other user's detail
+      consumes:
+        - application/json
+        - multipart/form-data
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+
+      parameters:
+        - in: path
+          name: id
+          description: The user's database id
+          required: true
+          schema:
+            type: string
+      
+      responses:
+        200:
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    description: Information
+                    example: Detail user
+                  user: 
+                    $ref: "#/definitions/User"
+        404:
+          description: Failed operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Information
+                    example: Tidak ditemukan
+    put:
+      security:
+        - bearerAuth: []
+      tags:
+        - User
+      summary: Update user with id
+      description: Update user with the id provided, though only admin can update users
+      consumes:
+        - application/json
+        - multipart/form-data
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+
+      parameters:
+        - in: path
+          name: id
+          description: The user's database id
+          required: true
+          schema:
+            type: string
+      
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: The user's Username, used to log in
+                  example: admin1
+                password:
+                  type: string
+                  description: The user's would be password
+                  example: secret
+                name:
+                  type: string
+                  description: The user's name
+                  example: Admin Satu
+                role:
+                  type: string
+                  description: User's role that dictate their rights in the API
+                  enum:
+                    - admin
+                    - user
+      
+      
+      responses:
+        200:
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    description: Information
+                    example: User berhasil di update
+                  user: 
+                    $ref: "#/definitions/User"
+        404:
+          description: Failed operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Information
+                    example: Tidak ditemukan
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+
+    delete:
+      security:
+        - bearerAuth: []
+      tags:
+        - User
+      summary: Delete user with id
+      description: Delete user with the id provided, though only admin can delete users
+      consumes:
+        - application/json
+        - multipart/form-data
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+
+      parameters:
+        - in: path
+          name: id
+          description: The user's database id
+          required: true
+          schema:
+            type: string
+      
+      responses:
+        200:
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    description: Information
+                    example: User berhasil dihapus
+                  user: 
+                    $ref: "#/definitions/User"
+        404:
+          description: Failed operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Information
+                    example: Tidak ditemukan
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /user/auth:
+    get:
+      security:
+        - bearerAuth: []
+      tags:
+        - User
+      summary: Get authenticated user
+      description: Get the currently authenticated user object
+      consumes:
+        - application/json
+        - multipart/form-data
+        - application/x-www-form-urlencoded
+      produces:
+        - application/json
+      
+      responses:
+        200:
+          description: Successful Operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  msg:
+                    type: string
+                    description: Information
+                    example: User yang sedang login
+                  user: 
+                    $ref: "#/definitions/User"
+        401:
+          $ref: '#/components/responses/UnauthorizedError'
+
+definitions:
+  User:
+    type: object
+    properties:
+      _id:
+        type: string
+        example: 6068ad6372d592002e51d29a
+        description: 
+      username:
+        type: string
+        description: The user's Username, used to log in
+        example: admin1
+      name:
+        type: string
+        description: The user's name
+        example: Admin Satu
+      role:
+        type: string
+        description: User's role that dictate their rights in the API
+        enum:
+          - admin
+          - user
+      created_at:
+        type: string
+        format: date-time
+
+
+      

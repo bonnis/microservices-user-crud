@@ -1,0 +1,14 @@
+version: '3.4'
+
+services:
+  apigateway:
+    image: apigateway
+    build: .
+    environment:
+      NODE_ENV: production
+      USER_SERVICE_URL : http://userservice:3000
+      AUTH_SERVICE_URL : http://authservice:3000
+    ports:
+      - 3000:3000
+    volumes: 
+      - .:/usr/src/app
